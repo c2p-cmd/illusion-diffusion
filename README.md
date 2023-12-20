@@ -15,6 +15,8 @@ pip3 install -r requirements.txt
 
 [QR Monsters App](https://huggingface.co/spaces/AP123/IllusionDiffusion/blob/main/app.py)
 
+[Illusion Diffusion Pattern](https://huggingface.co/Norod78/SD15-IllusionDiffusionPattern-LoRA)
+
 ### Pytorch Metal Installtion link:
 
 [Here](https://developer.apple.com/metal/pytorch/)
