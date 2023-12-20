@@ -1,22 +1,29 @@
 # Illusion Diffusion
 
-## Instructions for installing PyTorch with MPS (Metal Performance Shaders)
-```bash
-xcode-select --install
+**Illusion Diffusion** is a project exploring AI image generation with a focus on creative effects and artistic control. This repository provides basic tools and instructions for generating unique images using Stable Diffusion models and the Metal Performance Shaders (MPS) on Apple devices.
 
-pip3 install --pre torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/nightly/cpu
+## Installation
 
-pip3 install -r requirements.txt
-```
+1. **PyTorch with MPS:**
+    - Install Xcode Command Line Tools: `xcode-select --install`
+    - Install PyTorch (nightly): `pip3 install --pre torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/nightly/cpu`
+    - Install dependencies: `pip3 install -r requirements.txt`
+2. **Optional GPU Drivers:** Install latest drivers for optimal performance.
 
-### Model Links
+## Usage
 
-[QR Monster](https://huggingface.co/monster-labs/control_v1p_sd15_qrcode_monster)
+1. **Run the script:** See script documentation for commands and configurations.
+2. **Provide a prompt:** Describe the desired image (e.g., "a dreamlike landscape").
+3. **Optional:** Use a control image for additional guidance.
+4. **Generate image:** The script will create and save an image based on your prompt and settings.
 
-[QR Monsters App](https://huggingface.co/spaces/AP123/IllusionDiffusion/blob/main/app.py)
+## Models
 
-[Illusion Diffusion Pattern](https://huggingface.co/Norod78/SD15-IllusionDiffusionPattern-LoRA)
+* **QR Monster:** This model specializes in incorporating images within generated artworks.
+* **Illusion Diffusion Pattern:** This model utilizes patterns as control elements for creative effects.
 
-### Pytorch Metal Installtion link:
+## Resources
 
-[Here](https://developer.apple.com/metal/pytorch/)
+* QR Monster: [https://huggingface.co/guumaster/blot-monster-diffusion](https://huggingface.co/guumaster/blot-monster-diffusion)
+* Illusion Diffusion Pattern: [https://huggingface.co/spaces/hysts/LoRA-SD-training](https://huggingface.co/spaces/hysts/LoRA-SD-training)
+* PyTorch Metal Installation: [https://developer.apple.com/metal/pytorch/](https://developer.apple.com/metal/pytorch/)
