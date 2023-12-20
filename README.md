@@ -1,7 +1,9 @@
 # Illusion Diffusion
 
-## Instructions
+## Instructions for installing PyTorch with MPS (Metal Performance Shaders)
 ```bash
+xcode-select --install
+
 pip3 install --pre torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/nightly/cpu
 
 pip3 install -r requirements.txt
