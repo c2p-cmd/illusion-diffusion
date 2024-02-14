@@ -1,6 +1,6 @@
-# Illusion Diffusion
+# Stable Diffusion
 
-**Illusion Diffusion** is a project exploring AI image generation with a focus on creative effects and artistic control. This repository provides basic tools and instructions for generating unique images using Stable Diffusion models and the Metal Performance Shaders (MPS) on Apple devices.
+**Stable Diffusion** is a project exploring AI image generation with a focus on creative effects and artistic control. This repository provides basic tools and instructions for generating unique images using Stable Diffusion models and the Metal Performance Shaders (MPS) on Apple devices.
 
 ## Installation
 
@@ -21,9 +21,11 @@
 
 * **QR Monster:** This model specializes in incorporating images within generated artworks.
 * **Illusion Diffusion Pattern:** This model utilizes patterns as control elements for creative effects.
+* **Proteus:** Proteus serves as a sophisticated enhancement over OpenDalleV1.1, leveraging its core functionalities to deliver superior outcomes
 
 ## Resources
 
 * QR Monster: [https://huggingface.co/guumaster/blot-monster-diffusion](https://huggingface.co/guumaster/blot-monster-diffusion)
 * Illusion Diffusion Pattern: [https://huggingface.co/spaces/hysts/LoRA-SD-training](https://huggingface.co/spaces/hysts/LoRA-SD-training)
+* dataautogpt3/ProteusV0.3: [https://huggingface.co/dataautogpt3/ProteusV0.3](https://huggingface.co/dataautogpt3/ProteusV0.3)
 * PyTorch Metal Installation: [https://developer.apple.com/metal/pytorch/](https://developer.apple.com/metal/pytorch/)
