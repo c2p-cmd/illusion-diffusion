@@ -93,4 +93,5 @@ if __name__=='__main__':
         outputs=gr.Gallery(label="Output Images")
     )
 
+    demo.queue(concurrency_count=2)
     demo.launch(share=True)
