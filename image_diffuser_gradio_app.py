@@ -25,9 +25,7 @@ def get_pipeline(model_name: str):
     print("Testing torch device")
     torch.ones(2, device=device) 
 
-    use_dall_e = model_name == model_choices[0]
-
-    if use_dall_e:
+    if model_name == model_choices[0]:
         pipeline = DiffusionPipeline.from_pretrained("stablediffusionapi/juggernaut-xl-v5").to(device)
         pipeline.load_lora_weights("ehristoforu/dalle-3-xl")
     else:
