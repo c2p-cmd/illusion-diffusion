@@ -3,3 +3,4 @@ ml_env/
 .fleet/
 flagged/
 log.txt
+.venv/
