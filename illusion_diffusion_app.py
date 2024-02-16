@@ -8,6 +8,7 @@ from diffusers import (
     EulerDiscreteScheduler
 )
 import gradio as gr
+from datetime import datetime
 
 if torch.cuda.is_available():
     device = torch.device("cuda")
@@ -37,6 +38,7 @@ vae = AutoencoderKL.from_pretrained("stabilityai/sd-vae-ft-mse", torch_dtype=tor
 # pre-trained controlnet
 controlnet = ControlNetModel.from_pretrained("monster-labs/control_v1p_sd15_qrcode_monster", torch_dtype=torch.float16)
 
+
 def setup_piepline(
     base_model: str,
     sampler = "Euler"
@@ -46,7 +48,6 @@ def setup_piepline(
         base_model,
         controlnet=controlnet,
         vae=vae,
-        safety_checker=None,
         torch_dtype=torch.float16
     ).to(device)
 
@@ -56,10 +57,10 @@ def setup_piepline(
     image_pipe = image_pipe.to(device)
 
     latent_pipe.scheduler = SAMPLER_MAP[sampler](latent_pipe.scheduler.config)
-    # my_seed = random.randint(0, 2**32 - 1)
     generator = torch.Generator(device=device)
 
     return (latent_pipe, generator, image_pipe)
+
 
 # pre-processing images
 def center_crop_resize(img, output_size=(512, 512)):
@@ -77,6 +78,7 @@ def center_crop_resize(img, output_size=(512, 512)):
     img = img.resize(output_size)
 
     return img
+
 
 def common_upscale(samples, width, height, upscale_method, crop=False):
     if crop == "center":
@@ -96,12 +98,13 @@ def common_upscale(samples, width, height, upscale_method, crop=False):
 
     return torch.nn.functional.interpolate(s, size=(height, width), mode=upscale_method)
 
+
 def upscale(samples, upscale_method, scale_by):
-    #s = samples.copy()
     width = round(samples["images"].shape[3] * scale_by)
     height = round(samples["images"].shape[2] * scale_by)
     s = common_upscale(samples["images"], width, height, upscale_method, "disabled")
     return (s)
+
 
 def inference(
     image,
@@ -143,7 +146,14 @@ def inference(
         generator=generator
     )
 
-    return out_image.images[0]
+    final_output = out_image.images[0]
+
+    now = datetime.now()
+    image_name = now.strftime("%m-%d-%Y_%H-%M-%S")
+    final_output.save(f"outputs/illusion_{image_name}.png")
+
+    return final_output
+
 
 def gradio_app(share=False):
     demo = gr.Interface(
@@ -151,7 +161,7 @@ def gradio_app(share=False):
         inputs=[
             gr.Image(label="Illusion Image", type='pil'),
             gr.TextArea(label="Prompt"),
-            gr.TextArea(label="Negative Prompt", value="low quality, nsfw"),
+            gr.TextArea(label="Negative Prompt", value="low quality, NSFW, violence, anomalies, blurry, ugly, wrong proportions, watermark, image artifacts, low-res, ugly, jpeg artifacts, deformed, noisy image"),
             gr.Slider(minimum=0.0, maximum=50.0, step=0.25, value=7.5, label="Guidance Scale"),
             gr.Slider(minimum=0.0, maximum=5.0, step=0.01, value=0.8, label="Illusion strength", info="ControlNet conditioning scale"),
             gr.Slider(minimum=10, maximum=30, label="Latent Inference Steps", value=15, step=1),
