@@ -1,3 +1,5 @@
 ml_env/
 .idea/
 .fleet/
+flagged/
+log.txt
