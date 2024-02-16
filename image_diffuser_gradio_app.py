@@ -7,12 +7,19 @@ from diffusers import (
 )
 import gradio as gr
 
+
 model_choices = [
     "ehristoforu/dalle-3-xl",
     "dataautogpt3/ProteusV0.2",
     "dataautogpt3/ProteusV0.3"
 ]
 
+logger = open("log.txt", "wt")
+
+def pipeline_callback(pipe, index, timestamp, callback_kwargs):
+    logger.write(f"index: {index}, timestamp: {timestamp}")
+    logger.write("\n")
+    return callback_kwargs
 
 def get_pipeline(model_name: str):
     if torch.cuda.is_available():
@@ -68,6 +75,7 @@ def infer(
         num_images_per_prompt=images_per_prompt,
         guidance_scale=guidance_scale,
         cfg_scale=cfg_scale,
+        callback_on_step_end=pipeline_callback,
         num_inference_steps=num_inference_steps
     )
     return output.images
@@ -101,4 +109,4 @@ if __name__ == '__main__':
     )
 
     demo.queue()
-    demo.launch(share=True)
+    demo.launch(share=False)
