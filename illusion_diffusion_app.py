@@ -176,4 +176,4 @@ def gradio_app(share=False):
     demo.launch(share)
 
 if __name__=='__main__':
-    gradio_app(share=False)
+    gradio_app(share=True)
