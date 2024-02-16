@@ -3,5 +3,5 @@ gradio
 torch
 diffusers
 accelerate
-PIL
+pillow
 torchvision
