@@ -1,5 +1,17 @@
 # Stable Diffusion
 
+---
+title: Illusion Diffusion
+emoji: 📚
+colorFrom: purple
+colorTo: purple
+sdk: gradio
+sdk_version: 4.19.0
+app_file: app.py
+pinned: false
+license: mit
+---
+
 **Stable Diffusion** is a project exploring AI image generation with a focus on creative effects and artistic control. This repository provides basic tools and instructions for generating unique images using Stable Diffusion models and the Metal Performance Shaders (MPS) on Apple devices.
 
 ## Installation
