@@ -10,6 +10,7 @@ import gradio as gr
 
 model_choices = [
     "ehristoforu/dalle-3-xl",
+    "prompthero/openjourney-v4",
     "dataautogpt3/ProteusV0.2",
     "dataautogpt3/ProteusV0.3"
 ]
@@ -36,8 +37,16 @@ def get_pipeline(model_name: str):
     if model_name == model_choices[0]:
         pipeline = DiffusionPipeline.from_pretrained(
             "stablediffusionapi/juggernaut-xl-v5",
+            torch_dtype=torch.float16
         ).to(device)
         pipeline.load_lora_weights("ehristoforu/dalle-3-xl")
+
+    elif model_name == model_choices[1]:
+        pipeline = DiffusionPipeline.from_pretrained(
+            "prompthero/openjourney-v4"
+        ).to(device)
+        pipeline.load_lora_weights("prompthero/openjourney-lora")
+        
     else:
         # Load VAE component
         vae = AutoencoderKL.from_pretrained(
