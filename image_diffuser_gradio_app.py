@@ -6,6 +6,7 @@ from diffusers import (
     AutoencoderKL
 )
 import gradio as gr
+from datetime import datetime
 
 
 model_choices = [
@@ -25,7 +26,7 @@ def pipeline_callback(pipe, index, timestamp, callback_kwargs):
 def get_pipeline(model_name: str):
     if torch.cuda.is_available():
         device = torch.device("cuda")
-    if torch.backends.mps.is_available():
+    elif torch.backends.mps.is_available():
         device = torch.device("mps")
     else:
         device = torch.device("cpu")
@@ -87,6 +88,12 @@ def infer(
         callback_on_step_end=pipeline_callback,
         num_inference_steps=num_inference_steps
     )
+    for image in output.images:
+        try:
+            filename = datetime.now().strftime("%H-%M-%S-%f")
+            image.save(f"outputs/image_{filename}.png")
+        except:
+            print("error saving")
     return output.images
 
 
