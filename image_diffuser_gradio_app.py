@@ -11,8 +11,7 @@ from datetime import datetime
 
 model_choices = [
     "ehristoforu/dalle-3-xl",
-    "prompthero/openjourney-v4",
-    "dataautogpt3/ProteusV0.2",
+    "runwayml/stable-diffusion-v1-5",
     "dataautogpt3/ProteusV0.3"
 ]
 
@@ -43,9 +42,7 @@ def get_pipeline(model_name: str):
         pipeline.load_lora_weights("ehristoforu/dalle-3-xl")
 
     elif model_name == model_choices[1]:
-        pipeline = DiffusionPipeline.from_pretrained(
-            "prompthero/openjourney-v4"
-        ).to(device)
+        pipeline = DiffusionPipeline.from_pretrained(model_name).to(device)
         pipeline.load_lora_weights("prompthero/openjourney-lora")
         
     else:
@@ -66,15 +63,15 @@ def get_pipeline(model_name: str):
 
 
 def infer(
-        prompt: str,
-        negative_prompt: str,
-        cfg_scale: float,
-        guidance_scale: float,
-        num_inference_steps: int,
-        images_per_prompt: int,
-        width: int,
-        height: int,
-        model_choice: str
+    prompt: str,
+    negative_prompt: str,
+    cfg_scale: float,
+    guidance_scale: float,
+    num_inference_steps: int,
+    images_per_prompt: int,
+    width: int,
+    height: int,
+    model_choice: str
 ):
     pipeline = get_pipeline(model_choice)
     output = pipeline(
@@ -88,12 +85,12 @@ def infer(
         callback_on_step_end=pipeline_callback,
         num_inference_steps=num_inference_steps
     )
-    for image in output.images:
-        try:
-            filename = datetime.now().strftime("%H-%M-%S-%f")
-            image.save(f"outputs/image_{filename}.png")
-        except:
-            print("error saving")
+    # for image in output.images:
+    #     try:
+    #         filename = datetime.now().strftime("%H-%M-%S-%f")
+    #         image.save(f"outputs/image_{filename}.png")
+    #     except:
+    #         print("error saving")
     return output.images
 
 
@@ -109,12 +106,12 @@ if __name__ == '__main__':
                 "deformed, noisy image",
                 label="Negative Prompts"
             ),
-            gr.Slider(6, 9, label="CFG Scale"),
-            gr.Slider(4, 12, label="Guidance Scale"),
+            gr.Slider(6, 9, label="CFG Scale", step=0.5, value=6.5),
+            gr.Slider(4, 12, label="Guidance Scale", step=0.5, value=5.5),
             gr.Slider(20, 60, step=1, label="Number of Inference Steps"),
             gr.Slider(1, 10, step=1, label="Image Outputs", value=2),
-            gr.Number(value=512, label="Width of output image (should be divisible by 8)"),
-            gr.Number(value=608, label="Height of output image (should be divisible by 8)"),
+            gr.Number(value=512, label="Width of output image", info="(should be divisible by 8)"),
+            gr.Number(value=608, label="Height of output image", info="(should be divisible by 8)"),
             gr.Dropdown(
                 choices=model_choices,
                 value=model_choices[0],
