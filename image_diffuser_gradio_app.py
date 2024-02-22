@@ -15,7 +15,7 @@ model_choices = [
     "dataautogpt3/ProteusV0.3"
 ]
 
-logger = open("log.txt", "wt")
+logger = open("log.txt", "at")
 
 def pipeline_callback(pipe, index, timestamp, callback_kwargs):
     logger.write(f"index: {index}, timestamp: {timestamp}")
@@ -32,17 +32,21 @@ def get_pipeline(model_name: str):
         print("CUDA & MPS devices not found.")
 
     print("Testing torch device")
-    torch.ones(2, device=device)
+    print(torch.ones(2, device=device))
 
     if model_name == model_choices[0]:
         pipeline = DiffusionPipeline.from_pretrained(
             "stablediffusionapi/juggernaut-xl-v5",
             torch_dtype=torch.float16
-        ).to(device)
-        pipeline.load_lora_weights("ehristoforu/dalle-3-xl")
+        )
+        pipeline.load_lora_weights(model_name)
+        pipeline = pipeline.to(device)
 
     elif model_name == model_choices[1]:
-        pipeline = DiffusionPipeline.from_pretrained(model_name).to(device)
+        pipeline = DiffusionPipeline.from_pretrained(
+            model_name,
+            torch_dtype=torch.float16
+        ).to(device)
         pipeline.load_lora_weights("prompthero/openjourney-lora")
         
     else:
@@ -97,28 +101,30 @@ def infer(
 if __name__ == '__main__':
     demo = gr.Interface(
         fn=infer,
-        allow_flagging='never',
+        allow_flagging='manual',
         inputs=[
-            gr.TextArea("", label="Image Prompt"),
+            gr.TextArea("", label="Image Prompt", info="Things you would like to see"),
             gr.Text(
                 "nsfw, bad quality, bad anatomy, worst quality, low quality, low resolutions, extra fingers, blur, "
                 "blurry, ugly, wrongs proportions, watermark, image artifacts, lowres, ugly, jpeg artifacts, "
                 "deformed, noisy image",
-                label="Negative Prompts"
+                label="Negative Prompts",
+                info="Things you don't wanna see in the image"
             ),
             gr.Slider(6, 9, label="CFG Scale", step=0.5, value=6.5),
             gr.Slider(4, 12, label="Guidance Scale", step=0.5, value=5.5),
-            gr.Slider(20, 60, step=1, label="Number of Inference Steps"),
+            gr.Slider(20, 60, step=1, label="Number of Inference Steps", value=30),
             gr.Slider(1, 10, step=1, label="Image Outputs", value=2),
-            gr.Number(value=512, label="Width of output image", info="(should be divisible by 8)"),
-            gr.Number(value=608, label="Height of output image", info="(should be divisible by 8)"),
+            gr.Number(value=608, label="Width of output image", info="(should be divisible by 8)", step=8),
+            gr.Number(value=768, label="Height of output image", info="(should be divisible by 8)", step=8),
             gr.Dropdown(
                 choices=model_choices,
                 value=model_choices[0],
                 label="Model Choices"
             ),
         ],
-        outputs=gr.Gallery(label="Output Images")
+        outputs=gr.Gallery(label="Output Images"),
+        concurrency_limit=2
     )
 
     demo.queue()
