@@ -4,3 +4,5 @@ ml_env/
 flagged/
 log.txt
 prompts.txt
+.venv/
+diffusers/models/
