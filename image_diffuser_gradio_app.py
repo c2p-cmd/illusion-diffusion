@@ -2,19 +2,31 @@ import torch
 from diffusers import (
     DiffusionPipeline,
     StableDiffusionXLPipeline,
+    AutoPipelineForText2Image,
     KDPM2AncestralDiscreteScheduler,
+    LCMScheduler,
     AutoencoderKL
 )
 import gradio as gr
-from datetime import datetime
+# from datetime import datetime
 
 
 model_choices = [
     "ehristoforu/dalle-3-xl",
-    "runwayml/stable-diffusion-v1-5",
+    "Lykon/dreamshaper-7",
     "dataautogpt3/ProteusV0.3"
 ]
 
+pipelines = {}  # Store loaded pipelines for reuse
+if torch.cuda.is_available():
+    device = torch.device("cuda")
+elif torch.backends.mps.is_available():
+    device = torch.device("mps")
+else:
+    device = torch.device("cpu")
+    print("CUDA & MPS devices not found.")
+print("Testing torch device")
+print(torch.ones(2, device=device))
 logger = open("log.txt", "at")
 
 def pipeline_callback(pipe, index, timestamp, callback_kwargs):
@@ -23,47 +35,41 @@ def pipeline_callback(pipe, index, timestamp, callback_kwargs):
     return callback_kwargs
 
 def get_pipeline(model_name: str):
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-    elif torch.backends.mps.is_available():
-        device = torch.device("mps")
-    else:
-        device = torch.device("cpu")
-        print("CUDA & MPS devices not found.")
+    if model_name not in pipelines:
+        if model_name == model_choices[0]:
+            pipeline = DiffusionPipeline.from_pretrained(
+                "stabilityai/stable-diffusion-xl-base-1.0",
+                torch_dtype=torch.float16
+            )
+            pipeline.load_lora_weights(model_name)
+            pipeline = pipeline.to(device)
 
-    print("Testing torch device")
-    print(torch.ones(2, device=device))
+        elif model_name == model_choices[1]:
+            pipeline = AutoPipelineForText2Image.from_pretrained(
+                model_name,
+                torch_dtype=torch.float16,
+                variant="fp16"
+            ).to(device)
+            pipeline.scheduler = LCMScheduler.from_config(pipeline.scheduler.config, torch_dtype=torch.float16)
+            pipeline.load_lora_weights("latent-consistency/lcm-lora-sdv1-5")
+            pipeline.fuse_lora()
 
-    if model_name == model_choices[0]:
-        pipeline = DiffusionPipeline.from_pretrained(
-            "stablediffusionapi/juggernaut-xl-v5",
-            torch_dtype=torch.float16
-        )
-        pipeline.load_lora_weights(model_name)
-        pipeline = pipeline.to(device)
+        else:
+            vae = AutoencoderKL.from_pretrained(
+                "madebyollin/sdxl-vae-fp16-fix",
+                torch_dtype=torch.float16
+            )
+            pipeline = StableDiffusionXLPipeline.from_pretrained(
+                model_name,
+                vae=vae,
+                torch_dtype=torch.float16
+            )
+            pipeline.scheduler = KDPM2AncestralDiscreteScheduler.from_config(pipeline.scheduler.config)
+            pipeline = pipeline.to(device)
 
-    elif model_name == model_choices[1]:
-        pipeline = DiffusionPipeline.from_pretrained(
-            model_name,
-            torch_dtype=torch.float16
-        ).to(device)
-        pipeline.load_lora_weights("prompthero/openjourney-lora")
-        
-    else:
-        # Load VAE component
-        vae = AutoencoderKL.from_pretrained(
-            "madebyollin/sdxl-vae-fp16-fix",
-            torch_dtype=torch.float16
-        )
-        # Configure the pipeline
-        pipeline = StableDiffusionXLPipeline.from_pretrained(
-            model_name,
-            vae=vae,
-            torch_dtype=torch.float16
-        )
-        pipeline.scheduler = KDPM2AncestralDiscreteScheduler.from_config(pipeline.scheduler.config)
-        pipeline = pipeline.to(device)
-    return pipeline
+        pipelines[model_name] = pipeline  # Store the loaded pipeline
+
+    return pipelines[model_name]  # Return the cached pipeline
 
 
 def infer(
@@ -99,33 +105,42 @@ def infer(
 
 
 if __name__ == '__main__':
-    demo = gr.Interface(
-        fn=infer,
-        allow_flagging='manual',
-        inputs=[
-            gr.TextArea("", label="Image Prompt", info="Things you would like to see"),
-            gr.Text(
-                "nsfw, bad quality, bad anatomy, worst quality, low quality, low resolutions, extra fingers, blur, "
-                "blurry, ugly, wrongs proportions, watermark, image artifacts, lowres, ugly, jpeg artifacts, "
-                "deformed, noisy image",
-                label="Negative Prompts",
-                info="Things you don't wanna see in the image"
-            ),
-            gr.Slider(6, 9, label="CFG Scale", step=0.5, value=6.5),
-            gr.Slider(4, 12, label="Guidance Scale", step=0.5, value=5.5),
-            gr.Slider(20, 60, step=1, label="Number of Inference Steps", value=30),
-            gr.Slider(1, 10, step=1, label="Image Outputs", value=2),
-            gr.Number(value=608, label="Width of output image", info="(should be divisible by 8)", step=8),
-            gr.Number(value=768, label="Height of output image", info="(should be divisible by 8)", step=8),
-            gr.Dropdown(
-                choices=model_choices,
-                value=model_choices[0],
-                label="Model Choices"
-            ),
-        ],
-        outputs=gr.Gallery(label="Output Images"),
-        concurrency_limit=2
-    )
+  with gr.Blocks() as interface:
+    with gr.Row():
+        # Output section (remains outside the columns)
+        with gr.Column(elem_classes=["left-column"]):
+            # Prompt and Negative Prompt section
+            output = gr.Gallery(label="Output Images")
+            with gr.Row():
+                prompt_input = gr.TextArea(label="Image Prompt")
+                negative_prompt_input = gr.TextArea(
+                    value="nsfw, bad quality, bad anatomy, worst quality, low quality, low resolutions, extra fingers, blur, "
+                    "blurry, ugly, wrongs proportions, watermark, image artifacts, lowres, ugly, jpeg artifacts, "
+                    "deformed, noisy image",  # Pre-fill negative prompt
+                    label="Negative Prompts"
+                )
+            submit_btn = gr.Button("Generate!", variant='primary')
+        with gr.Column(elem_classes=["right-column"]):
+            # Other parameters section
+            model_dropdown = gr.Dropdown(choices=model_choices, label="Model Choices", value=model_choices[0])
+            cfg_scale_slider = gr.Slider(6, 9, label="CFG Scale", step=0.5, value=6.5)
+            guidance_scale_slider = gr.Slider(0, 12, label="Guidance Scale", step=0.5, value=5.5)
+            num_inference_steps_slider = gr.Slider(20, 60, step=1, label="Number of Inference Steps", value=30)
+            image_outputs_slider = gr.Slider(1, 10, step=1, label="Image Outputs", value=2)
+            image_width_number = gr.Number(value=608, label="Width", info="(Divisible by 8)")
+            image_height_number = gr.Number(value=768, label="Height", info="(Divisible by 8)")
 
-    demo.queue()
-    demo.launch(share=False)
+        inputs = [
+            prompt_input,
+            negative_prompt_input,
+            cfg_scale_slider,
+            guidance_scale_slider,
+            num_inference_steps_slider,
+            image_outputs_slider,
+            image_width_number,
+            image_height_number,
+            model_dropdown,
+        ]
+
+        submit_btn.click(fn=infer, inputs=inputs, outputs=output)
+        interface.launch()
