@@ -7,12 +7,14 @@ from diffusers import (
     LCMScheduler,
     AutoencoderKL
 )
+from PIL import Image
 import gradio as gr
 # from datetime import datetime
 
 
 model_choices = [
     "ehristoforu/dalle-3-xl",
+    "ehristoforu/dalle-3-xl-v2",
     "Lykon/dreamshaper-7",
     "dataautogpt3/ProteusV0.3"
 ]
@@ -43,8 +45,13 @@ def get_pipeline(model_name: str):
             )
             pipeline.load_lora_weights(model_name)
             pipeline = pipeline.to(device)
-
+            
         elif model_name == model_choices[1]:
+            pipeline = DiffusionPipeline.from_pretrained("fluently/Fluently-XL-v2")
+            pipeline.load_lora_weights("ehristoforu/dalle-3-xl-v2")
+            pipeline = pipeline.to(device)
+
+        elif model_name == model_choices[2]:
             pipeline = AutoPipelineForText2Image.from_pretrained(
                 model_name,
                 torch_dtype=torch.float16,
@@ -75,6 +82,7 @@ def get_pipeline(model_name: str):
 def infer(
     prompt: str,
     negative_prompt: str,
+    input_image: Image,
     cfg_scale: float,
     guidance_scale: float,
     num_inference_steps: int,
@@ -87,6 +95,7 @@ def infer(
     output = pipeline(
         prompt,
         negative_prompt=negative_prompt,
+        image=input_image,
         width=width,
         height=height,
         num_images_per_prompt=images_per_prompt,
@@ -119,6 +128,8 @@ if __name__ == '__main__':
                     "deformed, noisy image",  # Pre-fill negative prompt
                     label="Negative Prompts"
                 )
+            with gr.Accordion("Additional Inputs"):
+                input_img = gr.Image(label="Refrence image", type='pil')
             submit_btn = gr.Button("Generate!", variant='primary')
         with gr.Column(elem_classes=["right-column"]):
             # Other parameters section
@@ -133,6 +144,7 @@ if __name__ == '__main__':
         inputs = [
             prompt_input,
             negative_prompt_input,
+            input_img,
             cfg_scale_slider,
             guidance_scale_slider,
             num_inference_steps_slider,
