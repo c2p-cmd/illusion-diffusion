@@ -13,7 +13,7 @@ import gradio as gr
 
 
 model_choices = [
-    "ehristoforu/dalle-3-xl",
+    "nitrosocke/redshift-diffusion",
     "ehristoforu/dalle-3-xl-v2",
     "Lykon/dreamshaper-7",
     "dataautogpt3/ProteusV0.3"
@@ -40,10 +40,9 @@ def get_pipeline(model_name: str):
     if model_name not in pipelines:
         if model_name == model_choices[0]:
             pipeline = DiffusionPipeline.from_pretrained(
-                "stabilityai/stable-diffusion-xl-base-1.0",
+                "nitrosocke/redshift-diffusion",
                 torch_dtype=torch.float16
             )
-            pipeline.load_lora_weights(model_name)
             pipeline = pipeline.to(device)
             
         elif model_name == model_choices[1]:
